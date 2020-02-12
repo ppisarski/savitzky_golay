@@ -18,18 +18,18 @@ def diff_lorentzian(x, eta):
 
 
 def gen_data(n=100):
-    x = np.arange(0, n) * 0.02
+    x = np.arange(0, n) * 0.02 + np.random.randn(n) * 0.01
     y = lorentzian(x - 1.0, 0.2) + np.random.randn(n) * 0.1
     return x, y
 
 
 def main():
     x, y = gen_data()
-    window_length = 7
+    window_length = 9
     polyorder = 2
 
-    ysm = savgol_nonuniform(x, y, int((window_length - 1) / 2), polyorder, 0)
     yusm = savgol_filter(y, window_length, polyorder, 0)
+    ysm = savgol_nonuniform(x, y, int((window_length - 1) / 2), polyorder, 0)
 
     fig, ax = plt.subplots(2, 1)
     fig.suptitle("Savitzky-Golay filter for window_length={} and polyorder={}".format(window_length, polyorder),
@@ -41,8 +41,8 @@ def main():
     ax[0].legend(loc="best")
     ax[0].set_title("data filtering without differentiating")
 
-    ysm = savgol_nonuniform(x, y, int((window_length - 1) / 2), polyorder, 1)
     yusm = savgol_filter(y, window_length, polyorder, 1, 0.02)
+    ysm = savgol_nonuniform(x, y, int((window_length - 1) / 2), polyorder, 1)
 
     ax[1].plot(x, diff_lorentzian(x - 1.0, 0.2), color="C7", label="derivative")
     ax[1].scatter(x, np.concatenate([[0], np.diff(y) / np.diff(x)]), color="C0", label="data + noise derivative")
