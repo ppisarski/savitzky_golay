@@ -4,6 +4,8 @@
  free to use at the user's risk
 """
 
+__all__ = ["savgol_nonuniform"]
+
 import numpy as np
 
 
