@@ -27,7 +27,7 @@ def savgol_nonuniform(x, y, n, deg, deriv=0):
         y = np.array(y)
 
     if x.shape != y.shape:
-        raise RuntimeError("don't even try")
+        raise RuntimeError("x and y arrays are of different shape")
     if x.shape[0] <= 2 * n:
         raise RuntimeError("not enough data to start the smoothing process")
     if 2 * n + 1 <= deg + 1:
@@ -36,12 +36,6 @@ def savgol_nonuniform(x, y, n, deg, deriv=0):
     m = 2 * n + 1  # the size of the filter window
     o = deg + 1  # the smoothing order
 
-    A = np.zeros((m, o))
-    tA = np.zeros((o, m))
-
-    t = np.zeros(m)
-    c = np.zeros(o)
-
     # do not smooth start and end data
     sz = y.shape[0]
     ysm = np.zeros(y.shape)
@@ -49,26 +43,21 @@ def savgol_nonuniform(x, y, n, deg, deriv=0):
         ysm[i] = y[i]
         ysm[sz - i - 1] = y[sz - i - 1]
 
+    A = np.zeros((m, o))  # A
+    tA = A.transpose()  # A transposed
+    t = np.zeros(m)
     # start smoothing
     for i in range(n, x.shape[0] - n):
-        # make A and tA
         for j in range(m):
             t[j] = x[i + j - n] - x[i]
         for j in range(m):
             r = 1.0
             for k in range(o):
                 A[j, k] = r
-                tA[k, j] = r
                 r *= t[j]
-
-        # make tA.A
-        tAA = np.matmul(tA, A)
-
-        # make (tA.A)-¹ in place
-        tAA = np.linalg.inv(tAA)
-
-        # make (tA.A)-¹.tA
-        tAAtA = np.matmul(tAA, tA)
+        tAA = np.matmul(tA, A)  # make tA.A
+        tAA = np.linalg.inv(tAA)  # make (tA.A)-¹ in place
+        tAAtA = np.matmul(tAA, tA)  # make (tA.A)-¹.tA
 
         # compute the polynomial's value at the center of the sample
         ysm[i] = 0.0
