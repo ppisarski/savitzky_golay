@@ -43,8 +43,7 @@ def savgol_nonuniform(x, y, n, deg, deriv=0):
         ysm[i] = y[i]
         ysm[sz - i - 1] = y[sz - i - 1]
 
-    A = np.zeros((m, o))  # A
-    tA = A.transpose()  # A transposed
+    A = np.zeros((m, o))  # A matrix
     t = np.zeros(m)
     # start smoothing
     for i in range(n, x.shape[0] - n):
@@ -55,6 +54,7 @@ def savgol_nonuniform(x, y, n, deg, deriv=0):
             for k in range(o):
                 A[j, k] = r
                 r *= t[j]
+        tA = A.transpose()  # A transposed
         tAA = np.matmul(tA, A)  # make tA.A
         tAA = np.linalg.inv(tAA)  # make (tA.A)-¹ in place
         tAAtA = np.matmul(tAA, tA)  # make (tA.A)-¹.tA
