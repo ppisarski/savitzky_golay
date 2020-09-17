@@ -9,14 +9,14 @@ __all__ = ["savgol_nonuniform"]
 import numpy as np
 
 
-def savgol_nonuniform(x, y, n, deg, deriv=0):
+def savgol_nonuniform(x, y, window_length, polyorder, deriv=0):
     """
     Savitzky-Golay smoothing 1D filter
 
     :param x:
     :param y:
-    :param n: the half size of the smoothing sample, e.g. n=2 for smoothing over 5 points
-    :param deg: the degree of the local polynomial fit, e.g. deg=2 for a parabolic fit
+    :param window_length: the smoothing sample, e.g. window_length=2 for smoothing over 5 points
+    :param polyorder: the degree of the local polynomial fit, e.g. polyorder=2 for a parabolic fit
     :param deriv: The order of the derivative to compute. This must be a nonnegative integer.
             The default is 0, which means to filter the data without differentiating.
     :return:
@@ -26,23 +26,35 @@ def savgol_nonuniform(x, y, n, deg, deriv=0):
     if type(y) is not np.array:
         y = np.array(y)
 
+    n = int((window_length - 1) / 2)
+
     if x.shape != y.shape:
         raise RuntimeError("x and y arrays are of different shape")
-    if x.shape[0] <= 2 * n:
+    if x.shape[0] < window_length:
         raise RuntimeError("not enough data to start the smoothing process")
-    if 2 * n + 1 <= deg + 1:
+    if 2 * n + 1 <= polyorder + 1:
         raise RuntimeError("need at least deg+1 points to make the polynomial")
 
-    m = 2 * n + 1  # the size of the filter window
-    o = deg + 1  # the smoothing order
-
-    # do not smooth start and end data
-    sz = y.shape[0]
+    # smooth start and end data
     ysm = np.zeros(y.shape)
     for i in range(n):
-        ysm[i] = y[i]
-        ysm[sz - i - 1] = y[sz - i - 1]
+        j = y.shape[0] - i - 1
+        if deriv == 0:
+            ysm[i] = y[i]
+            ysm[j] = y[j]
+        if deriv == 1:
+            ysm[i] = (y[i] - y[i - 1]) / (x[i] - x[i - 1])
+            ysm[j] = (y[j] - y[j - 1]) / (x[j] - x[j - 1])
+        if deriv == 2:
+            ysm[i] = (((y[i] - y[i - 1]) / (x[i] - x[i - 1])) - ((y[i - 1] - y[i - 2]) / (x[i - 1] - x[i - 2]))) / \
+                     (x[i] - x[i - 1])
+            ysm[j] = (((y[j] - y[j - 1]) / (x[j] - x[j - 1])) - ((y[j - 1] - y[j - 2]) / (x[j - 1] - x[j - 2]))) / \
+                     (x[j] - x[j - 1])
+        if deriv >= 3:
+            raise NotImplementedError("derivatives >= 3 not implemented")
 
+    m = 2 * n + 1  # the size of the filter window
+    o = polyorder + 1  # the smoothing order
     A = np.zeros((m, o))  # A matrix
     t = np.zeros(m)
     # start smoothing
